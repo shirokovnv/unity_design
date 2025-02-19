@@ -62,7 +62,6 @@ namespace Architecture
             anyTransitions.Clear();
         }
 
-
         void ChangeState(IState state)
         {
             if (state == current.State) return;
@@ -74,7 +73,6 @@ namespace Architecture
             nextState?.OnEnter();
             current = nodes[state.GetType()];
         }
-
 
         ITransition GetTransition()
         {
