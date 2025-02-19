@@ -99,7 +99,7 @@ namespace Architecture
             var searchState = GetStateByType(state.GetType());
             if (searchState == null)
             {
-                states.Add(searchState, new HashSet<ITransition>());
+                states.Add(state, new HashSet<ITransition>());
             }
 
             return searchState;
