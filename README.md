@@ -7,6 +7,7 @@ A set of reusable architectural patterns for Unity Projects.
 For now contains:
 
 - Bloc (Business Logic Component) : port of original **dart/flutter** [bloc](https://bloclibrary.dev/)
+- State Machine : adapted from [git-amend](https://github.com/adammyhre)
 - Reactive Property 
 - Heap data structure
 
