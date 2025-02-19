@@ -37,7 +37,7 @@ public class Heap<T> where T : IHeapItem<T>
 
         if (!items[item.HeapIndex].Equals(item))
         {
-            throw new Exception("Illegal heap item.");
+            throw new Exception($"Illegal heap item {item}.");
         }
 
         SortUp(item);
