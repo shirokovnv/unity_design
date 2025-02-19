@@ -1,6 +1,8 @@
+using System;
+
 namespace Architecture
 {
-    public interface IState
+    public interface IState : IEquatable<IState>
     {
         void OnEnter();
         void OnExit();
