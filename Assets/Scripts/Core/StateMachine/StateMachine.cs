@@ -60,7 +60,10 @@ namespace Architecture
             var stateFrom = GetStateByType(from.GetType());
             var stateTo = GetStateByType(from.GetType());
 
-            states[stateFrom].RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
+            if (stateFrom != null)
+            {
+                states[stateFrom].RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
+            }
         }
 
         public void ClearAnyTransitions()
