@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace Architecture
 {
     public class StateMachine
     {
-        StateNode current;
-        readonly Dictionary<Type, StateNode> nodes = new();
+        IState current;
+        readonly Dictionary<IState, HashSet<ITransition>> states = new();
         readonly HashSet<ITransition> anyTransitions = new();
 
         public void Update()
@@ -15,46 +16,51 @@ namespace Architecture
             if (transition != null)
                 ChangeState(transition.To);
 
-            current.State?.OnUpdate();
+            current?.OnUpdate();
         }
 
         public void FixedUpdate()
         {
-            current.State?.OnFixedUpdate();
+            current?.OnFixedUpdate();
         }
 
         public void SetState(IState state)
         {
-            current = nodes[state.GetType()];
-            current.State?.OnEnter();
+            current = GetStateByType(state.GetType());
+            current?.OnEnter();
         }
 
         public void AddTransition(IState from, IState to, IPredicate condition)
         {
-            GetOrAddNode(from).AddTransition(GetOrAddNode(to).State, condition);
+            if (from == null || to == null)
+            {
+                throw new ArgumentException("State cannot be null.");
+            }
+
+            var stateFrom = GetOrAddState(from);
+            var stateTo = GetOrAddState(to);
+
+            states[stateFrom].Add(new Transition(stateFrom, stateTo, condition));
         }
 
         public void AddAnyTransition(IState to, IPredicate condition)
         {
-            anyTransitions.Add(new Transition(GetOrAddNode(to).State, condition));
+            anyTransitions.Add(new Transition(null, GetOrAddState(to), condition));
         }
 
         public void RemoveAnyTransition(IState to, IPredicate condition)
         {
-            anyTransitions.RemoveWhere(transition => transition.To == to && transition.Condition == condition);
+            var stateTo = GetStateByType(to.GetType());
+
+            anyTransitions.RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
         }
 
         public void RemoveTransition(IState from, IState to, IPredicate condition)
         {
-            foreach (var node in nodes.Values)
-            {
-                if (node.State != from)
-                {
-                    continue;
-                }
+            var stateFrom = GetStateByType(from.GetType());
+            var stateTo = GetStateByType(from.GetType());
 
-                node.Transitions.RemoveWhere(transition => transition.To == to && transition.Condition == condition);
-            }
+            states[stateFrom].RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
         }
 
         public void ClearAnyTransitions()
@@ -64,14 +70,15 @@ namespace Architecture
 
         void ChangeState(IState state)
         {
-            if (state == current.State) return;
+            if (state == current || state.GetType() == current.GetType()) return;
 
-            var previousState = current.State;
-            var nextState = nodes[state.GetType()].State;
+            var previousState = current;
+            var nextState = GetStateByType(state.GetType());
 
             previousState?.OnExit();
             nextState?.OnEnter();
-            current = nodes[state.GetType()];
+
+            current = nextState;
         }
 
         ITransition GetTransition()
@@ -80,41 +87,27 @@ namespace Architecture
                 if (transition.Condition.Evaluate())
                     return transition;
 
-            foreach (var transition in current.Transitions)
+            foreach (var transition in states[current])
                 if (transition.Condition.Evaluate())
                     return transition;
 
             return null;
         }
 
-        StateNode GetOrAddNode(IState state)
+        IState GetOrAddState(IState state)
         {
-            var node = nodes.GetValueOrDefault(state.GetType());
-
-            if (node == null)
+            var searchState = GetStateByType(state.GetType());
+            if (searchState == null)
             {
-                node = new StateNode(state);
-                nodes.Add(state.GetType(), node);
+                states.Add(searchState, new HashSet<ITransition>());
             }
 
-            return node;
+            return searchState;
         }
 
-        class StateNode
+        IState GetStateByType(Type stateType)
         {
-            public IState State { get; }
-            public HashSet<ITransition> Transitions { get; }
-
-            public StateNode(IState state)
-            {
-                State = state;
-                Transitions = new HashSet<ITransition>();
-            }
-
-            public void AddTransition(IState to, IPredicate condition)
-            {
-                Transitions.Add(new Transition(to, condition));
-            }
+            return states.Keys.Where(state => state.GetType() == stateType).FirstOrDefault();
         }
     }
 }
