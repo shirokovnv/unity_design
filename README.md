@@ -8,6 +8,7 @@ For now contains:
 
 - Bloc (Business Logic Component) : port of original **dart/flutter** [bloc](https://bloclibrary.dev/)
 - Reactive Property 
+- Heap data structure
 
 ## License
 
