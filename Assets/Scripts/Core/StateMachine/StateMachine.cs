@@ -58,7 +58,7 @@ namespace Architecture
         public void RemoveTransition(IState from, IState to, IPredicate condition)
         {
             var stateFrom = GetStateByType(from.GetType());
-            var stateTo = GetStateByType(from.GetType());
+            var stateTo = GetStateByType(to.GetType());
 
             if (stateFrom != null)
             {
