@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Architecture
 {
@@ -26,7 +25,7 @@ namespace Architecture
 
         public void SetState(IState state)
         {
-            current = GetStateByType(state.GetType());
+            current = GetOrAddState(state);
             current?.OnEnter();
         }
 
@@ -37,10 +36,10 @@ namespace Architecture
                 throw new ArgumentException("State cannot be null.");
             }
 
-            var stateFrom = GetOrAddState(from);
-            var stateTo = GetOrAddState(to);
+            GetOrAddState(from);
+            GetOrAddState(to);
 
-            states[stateFrom].Add(new Transition(stateFrom, stateTo, condition));
+            states[from].Add(new Transition(from, to, condition));
         }
 
         public void AddAnyTransition(IState to, IPredicate condition)
@@ -50,20 +49,12 @@ namespace Architecture
 
         public void RemoveAnyTransition(IState to, IPredicate condition)
         {
-            var stateTo = GetStateByType(to.GetType());
-
-            anyTransitions.RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
+            anyTransitions.RemoveWhere(transition => transition.To == to && transition.Condition == condition);
         }
 
         public void RemoveTransition(IState from, IState to, IPredicate condition)
         {
-            var stateFrom = GetStateByType(from.GetType());
-            var stateTo = GetStateByType(to.GetType());
-
-            if (stateFrom != null)
-            {
-                states[stateFrom].RemoveWhere(transition => transition.To == stateTo && transition.Condition == condition);
-            }
+            states[from]?.RemoveWhere(transition => transition.To == to && transition.Condition == condition);
         }
 
         public void ClearAnyTransitions()
@@ -76,7 +67,7 @@ namespace Architecture
             if (state == current || state.GetType() == current.GetType()) return;
 
             var previousState = current;
-            var nextState = GetStateByType(state.GetType());
+            var nextState = state;
 
             previousState?.OnExit();
             nextState?.OnEnter();
@@ -99,18 +90,12 @@ namespace Architecture
 
         IState GetOrAddState(IState state)
         {
-            var searchState = GetStateByType(state.GetType());
-            if (searchState == null)
+            if (!states.ContainsKey(state))
             {
                 states.Add(state, new HashSet<ITransition>());
             }
 
-            return searchState;
-        }
-
-        IState GetStateByType(Type stateType)
-        {
-            return states.Keys.Where(state => state.GetType() == stateType).FirstOrDefault();
+            return state;
         }
     }
 }
