@@ -9,6 +9,7 @@ For now contains:
 - Bloc (Business Logic Component) : port of original **dart/flutter** [bloc](https://bloclibrary.dev/)
 - State Machine
 - Service Locator
+- Injector
 - Reactive Property 
 - Heap data structure
 
